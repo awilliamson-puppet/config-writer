@@ -1,0 +1,39 @@
+
+
+source "docker" "example" {
+  image  = "ubuntu:xenial"
+  commit = true
+}
+
+source "docker" "example-bionic" {
+  image  = "ubuntu:bionic"
+  commit = true
+}
+
+{{range .BuildConfigs}}
+build {
+  sources = [
+    "{{ .ImageName }}"
+  ]
+
+  provisioner "file" {
+    {{ if eq .OS_Type "Linux" }}
+    Destination = "/tmp/LabBuildSteps/${var.lab_id}"
+    Source = "./PE101-Lab-2-1"
+    {{ else }}
+    Destination = "C:\temp\LabBuildSteps\${var.lab_id}"
+    Source = "./PE101-Lab-2-1"
+    {{ end }}
+  }
+
+  provisioner {{ if eq .OS_Type "Windows" }} "powershell" {{ else }} "shell" {{ end }} {
+    environment_vars = [
+      "{{ .OS_Type }}",
+    ]
+    inline = [
+      "echo Adding file to Docker Container",
+      "echo \"FOO is $FOO\" > example.txt"
+    ]
+  }
+}
+{{end}}
